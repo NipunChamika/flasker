@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, flash
 from dotenv import load_dotenv
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
@@ -44,4 +44,5 @@ def name_form():
     if form.validate_on_submit():
         name = form.name.data
         form.name.data = ''
+        flash('Form submitted successfully!')
     return render_template('form.html', name=name, form=form)

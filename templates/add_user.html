@@ -27,7 +27,7 @@ get_flashed_messages() %}
 <h1>Add User</h1>
 <br />
 <div class="shadow-sm p-3 mb-5 bg-body-tertiary rounded">
-  <form method="post">
+  <form action="{{ url_for('add_user') }}" method="post">
     {{ form.hidden_tag() }} {{ form.name.label(class="form-label") }} {{
     form.name(class="form-control") }} {{ form.email.label(class="form-label")}}
     {{ form.email(class="form-control") }} {{
@@ -47,6 +47,9 @@ get_flashed_messages() %}
     </td>
     <td>{{ user.email }}</td>
     <td>{{ user.favorite_color }}</td>
+    <td>
+      <a href="{{ url_for('delete_user', id=user.id) }}">Delete</a>
+    </td>
   </tr>
   {% endfor %}
 </table>

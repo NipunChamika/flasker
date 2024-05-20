@@ -1,7 +1,7 @@
 import os
 from datetime import datetime, timezone
 from dotenv import load_dotenv
-from flask import Flask, render_template, flash, request
+from flask import Flask, redirect, render_template, flash, request, url_for
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
@@ -76,7 +76,7 @@ def name_form():
 
 
 @app.route('/users', methods=['GET', 'POST'])
-def user_form():
+def add_user():
     name = None
     form = UserForm()
     if form.validate_on_submit():
@@ -92,7 +92,7 @@ def user_form():
         form.favorite_color.data = ''
         flash('User added successfully!')
     users = User.query.order_by(User.date_added)
-    return render_template('user_form.html', name=name, form=form, users=users)
+    return render_template('add_user.html', name=name, form=form, users=users)
 
 
 @app.route('/update/<int:id>', methods=['GET', 'POST'])
@@ -112,4 +112,18 @@ def update_user(id):
             flash('Database error, try again!')
             return render_template('update.html', form=form, user_to_update=user_to_update)
     else:
-        return render_template('update.html', form=form, user_to_update=user_to_update)
+        return render_template('update.html', form=form, user_to_update=user_to_update, id=id)
+
+
+@app.route('/delete/<int:id>')
+def delete_user(id):
+    user_to_delete = User.query.get_or_404(id)
+
+    try:
+        db.session.delete(user_to_delete)
+        db.session.commit()
+        flash('User deleted successfully!')
+        return redirect(url_for('add_user'))
+    except SQLAlchemyError:
+        flash('Database error, try again!')
+        return redirect(url_for('add_user'))

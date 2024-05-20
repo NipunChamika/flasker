@@ -1,9 +1,10 @@
 import os
 from datetime import datetime, timezone
 from dotenv import load_dotenv
-from flask import Flask, render_template, flash
+from flask import Flask, render_template, flash, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
+from sqlalchemy.exc import SQLAlchemyError
 from wtforms import StringField, SubmitField, EmailField
 from wtforms.validators import DataRequired
 
@@ -86,3 +87,22 @@ def user_form():
         flash('User added successfully!')
     users = User.query.order_by(User.date_added)
     return render_template('user_form.html', name=name, form=form, users=users)
+
+
+@app.route('/update/<int:id>', methods=['GET', 'POST'])
+def update_user(id):
+    form = UserForm()
+    user_to_update = User.query.get_or_404(id)
+
+    if request.method == 'POST':
+        user_to_update.name = request.form['name']
+        user_to_update.email = request.form['email']
+        try:
+            db.session.commit()
+            flash('User updated successfully!')
+            return render_template('update.html', form=form, user_to_update=user_to_update)
+        except SQLAlchemyError:
+            flash('Database error, try again!')
+            return render_template('update.html', form=form, user_to_update=user_to_update)
+    else:
+        return render_template('update.html', form=form, user_to_update=user_to_update)

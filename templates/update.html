@@ -17,6 +17,7 @@ get_flashed_messages() %}
   <tr>
     <td>{{ user.name }}</td>
     <td>{{ user.email }}</td>
+    <td>{{ user.favorite_color }}</td>
   </tr>
   {% endfor %}
 </table>
@@ -28,7 +29,10 @@ get_flashed_messages() %}
     {{ form.hidden_tag() }} {{ form.name.label(class="form-label") }} {{
     form.name(class="form-control", value=user_to_update.name) }} {{
     form.email.label(class="form-label") }} {{ form.email(class="form-control",
-    value=user_to_update.email) }}
+    value=user_to_update.email) }} {{
+    form.favorite_color.label(class="form-label") }} {{
+    form.favorite_color(class="form-control",
+    value=user_to_update.favorite_color) }}
     <br />
     {{ form.submit(class="btn btn-success") }}
   </form>

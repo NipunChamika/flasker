@@ -32,7 +32,11 @@ get_flashed_messages() %}
     form.name(class="form-control") }} {{ form.email.label(class="form-label")}}
     {{ form.email(class="form-control") }} {{
     form.favorite_color.label(class="form-label")}} {{
-    form.favorite_color(class="form-control") }}
+    form.favorite_color(class="form-control") }} {{
+    form.password.label(class="form-label")}} {{
+    form.password(class="form-control") }} {{
+    form.confirm_password.label(class="form-label")}} {{
+    form.confirm_password(class="form-control") }}
     <br />
     {{ form.submit(class="btn btn-success") }}
   </form>

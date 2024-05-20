@@ -6,8 +6,9 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from sqlalchemy.exc import SQLAlchemyError
-from wtforms import StringField, SubmitField, EmailField
-from wtforms.validators import DataRequired
+from werkzeug.security import generate_password_hash, check_password_hash
+from wtforms import PasswordField, StringField, SubmitField, EmailField
+from wtforms.validators import DataRequired, EqualTo
 
 load_dotenv()
 
@@ -24,8 +25,20 @@ class User(db.Model):
     name = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(255), nullable=False, unique=True)
     favorite_color = db.Column(db.String(50))
+    password_hash = db.Column(db.String(255), nullable=False)
     date_added = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    @property
+    def password(self):
+        raise AttributeError('Password is not a readable attribute.')
+
+    @password.setter
+    def password(self, password):
+        self.password = generate_password_hash(password)
+
+    def verify_password(self, password):
+        return check_password_hash(self.password, password)
 
     def __repr__(self) -> str:
         return f'<Name {self.name}>'
@@ -40,6 +53,9 @@ class UserForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     email = EmailField('Email', validators=[DataRequired()])
     favorite_color = StringField('Favorite Color')
+    password = PasswordField('Password', validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password', validators=[
+                                     DataRequired(), EqualTo('password', message='Passwords must match!')])
     submit = SubmitField('Submit')
 
 
@@ -82,14 +98,16 @@ def add_user():
     if form.validate_on_submit():
         existing_user = User.query.filter_by(email=form.email.data).first()
         if existing_user is None:
+            hashed_password = generate_password_hash(form.password.data)
             new_user = User(name=form.name.data, email=form.email.data,
-                            favorite_color=form.favorite_color.data)
+                            favorite_color=form.favorite_color.data, password_hash=hashed_password)
             db.session.add(new_user)
             db.session.commit()
         name = form.name.data
         form.name.data = ''
         form.email.data = ''
         form.favorite_color.data = ''
+        form.password = ''
         flash('User added successfully!')
     users = User.query.order_by(User.date_added)
     return render_template('add_user.html', name=name, form=form, users=users)

@@ -59,6 +59,12 @@ class UserForm(FlaskForm):
     submit = SubmitField('Submit')
 
 
+class LoginForm(FlaskForm):
+    email = EmailField('Email', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+
 @app.route('/')
 def index():
     favorite_pizza = ['Pepperoni', 'Cheese', 'Mushrooms']
@@ -145,3 +151,27 @@ def delete_user(id):
     except SQLAlchemyError:
         flash('Database error, try again!')
         return redirect(url_for('add_user'))
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    email = None
+    password = None
+    user = None
+    logged_in = None
+    form = LoginForm()
+
+    if form.validate_on_submit():
+        email = form.email.data
+        password = form.password.data
+        form.email.data = ''
+        form.password.data = ''
+
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            logged_in = check_password_hash(user.password_hash, password)
+        else:
+            flash('Wrong email or password')
+
+    return render_template('login.html', email=email, user=user, logged_in=logged_in, form=form)

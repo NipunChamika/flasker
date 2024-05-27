@@ -214,3 +214,9 @@ def add_post():
 
     posts = Post.query.order_by(Post.date_posted)
     return render_template('add_post.html', title=form.title.data, form=form, posts=posts)
+
+
+@app.route('/posts')
+def posts():
+    posts = Post.query.order_by(Post.date_posted)
+    return render_template('posts.html', posts=posts)

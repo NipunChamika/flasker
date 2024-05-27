@@ -9,6 +9,7 @@
         {{ post.date_posted }}</small></br></br>
         {{  post.content }}</br></br>
         <a href="{{ url_for('post', id=post.id) }}" class="btn btn-outline-success btn-sm">View Post</a>
+        <a href="{{ url_for('update_post', id=post.id) }}" class="btn btn-outline-success btn-sm">Edit Post</a>
     </div>
 {% endfor %}
 

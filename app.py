@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.security import generate_password_hash, check_password_hash
-from wtforms import PasswordField, StringField, SubmitField, EmailField
+from wtforms import PasswordField, StringField, SubmitField, EmailField, TextAreaField
 from wtforms.validators import DataRequired, EqualTo
 
 load_dotenv()
@@ -44,6 +44,16 @@ class User(db.Model):
         return f'<Name {self.name}>'
 
 
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255))
+    content = db.Column(db.Text)
+    author = db.Column(db.String(255))
+    slug = db.Column(db.String(255))
+    date_posted = db.Column(
+        db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+
 class NameForm(FlaskForm):
     name = StringField('Enter your name', validators=[DataRequired()])
     submit = SubmitField('Submit')
@@ -62,6 +72,14 @@ class UserForm(FlaskForm):
 class LoginForm(FlaskForm):
     email = EmailField('Email', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+
+class PostForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired()])
+    content = TextAreaField('Content', validators=[DataRequired()])
+    author = StringField('Author', validators=[DataRequired()])
+    slug = StringField('Slug', validators=[DataRequired()])
     submit = SubmitField('Submit')
 
 
@@ -175,3 +193,24 @@ def login():
             flash('Wrong email or password')
 
     return render_template('login.html', email=email, user=user, logged_in=logged_in, form=form)
+
+
+@app.route('/add-post', methods=['GET', 'POST'])
+def add_post():
+    form = PostForm()
+
+    if form.validate_on_submit():
+        post = Post(title=form.title.data, content=form.content.data,
+                    author=form.author.data, slug=form.slug.data)
+
+        form.title.data = ''
+        form.content.data = ''
+        form.author.data = ''
+        form.slug.data = ''
+
+        db.session.add(post)
+        db.session.commit()
+        flash('Post created successfully!')
+
+    posts = Post.query.order_by(Post.date_posted)
+    return render_template('add_post.html', title=form.title.data, form=form, posts=posts)

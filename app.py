@@ -249,3 +249,17 @@ def update_post(id):
     form.author.data = post.author
     form.slug.data = post.slug
     return render_template('update_post.html', form=form)
+
+
+@app.route('/posts/delete/<int:id>')
+def delete_post(id):
+    post = Post.query.get_or_404(id)
+
+    try:
+        db.session.delete(post)
+        db.session.commit()
+        flash('Post deleted successfully!')
+        return redirect(url_for('posts'))
+    except SQLAlchemyError:
+        flash('Database error, try again!')
+        return redirect(url_for('posts'))

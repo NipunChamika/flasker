@@ -142,7 +142,7 @@ def name_form():
     if form.validate_on_submit():
         name = form.name.data
         form.name.data = ''
-        flash('Form submitted successfully!')
+        flash('Form submitted successfully!', 'success')
     return render_template('name_form.html', name=name, form=form)
 
 
@@ -179,6 +179,7 @@ def add_user():
 
 
 @app.route('/update/<int:id>', methods=['GET', 'POST'])
+@login_required
 def update_user(id):
     form = UserForm()
     user_to_update = User.query.get_or_404(id)
@@ -189,26 +190,27 @@ def update_user(id):
         user_to_update.email = request.form['email']
         try:
             db.session.commit()
-            flash('User updated successfully!')
+            flash('User updated successfully!', 'success')
             return render_template('update.html', form=form, user_to_update=user_to_update)
         except SQLAlchemyError:
-            flash('Database error, try again!')
+            flash('Database error, try again!', 'danger')
             return render_template('update.html', form=form, user_to_update=user_to_update)
     else:
         return render_template('update.html', form=form, user_to_update=user_to_update, id=id)
 
 
 @app.route('/delete/<int:id>')
+@login_required
 def delete_user(id):
     user_to_delete = User.query.get_or_404(id)
 
     try:
         db.session.delete(user_to_delete)
         db.session.commit()
-        flash('User deleted successfully!')
+        flash('User deleted successfully!', 'success')
         return redirect(url_for('add_user'))
     except SQLAlchemyError:
-        flash('Database error, try again!')
+        flash('Database error, try again!', 'danger')
         return redirect(url_for('add_user'))
 
 
@@ -231,7 +233,7 @@ def test_pw():
         if user:
             logged_in = check_password_hash(user.password_hash, password)
         else:
-            flash('Wrong email or password')
+            flash('Wrong email or password', 'danger')
 
     return render_template('test_pw.html', email=email, user=user, logged_in=logged_in, form=form)
 
@@ -252,7 +254,7 @@ def add_post():
 
         db.session.add(post)
         db.session.commit()
-        flash('Post created successfully!')
+        flash('Post created successfully!', 'success')
 
     posts = Post.query.order_by(Post.date_posted)
     return render_template('add_post.html', title=form.title.data, form=form, posts=posts)
@@ -284,7 +286,7 @@ def update_post(id):
 
         db.session.add(post)
         db.session.commit()
-        flash('Post updated successfully!')
+        flash('Post updated successfully!', 'success')
         return redirect(url_for('post', id=post.id))
 
     form.title.data = post.title
@@ -302,10 +304,10 @@ def delete_post(id):
     try:
         db.session.delete(post)
         db.session.commit()
-        flash('Post deleted successfully!')
+        flash('Post deleted successfully!', 'success')
         return redirect(url_for('posts'))
     except SQLAlchemyError:
-        flash('Database error, try again!')
+        flash('Database error, try again!', 'danger')
         return redirect(url_for('posts'))
 
 

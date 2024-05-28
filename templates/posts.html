@@ -20,8 +20,10 @@
         {{ post.date_posted }}</small></br></br>
         {{  post.content }}</br></br>
         <a href="{{ url_for('post', id=post.id) }}" class="btn btn-outline-success btn-sm">View Post</a>
-        <a href="{{ url_for('update_post', id=post.id) }}" class="btn btn-outline-secondary btn-sm">Edit Post</a>
-        <a href="{{ url_for('delete_post', id=post.id) }}" class="btn btn-outline-danger btn-sm">Delete Post</a>
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('update_post', id=post.id) }}" class="btn btn-outline-secondary btn-sm">Edit Post</a>
+          <a href="{{ url_for('delete_post', id=post.id) }}" class="btn btn-outline-danger btn-sm">Delete Post</a>
+        {% endif %}
     </div>
 {% endfor %}
 

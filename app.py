@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, flash, request, url_for
-from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
@@ -237,6 +237,7 @@ def test_pw():
 
 
 @app.route('/add-post', methods=['GET', 'POST'])
+@login_required
 def add_post():
     form = PostForm()
 
@@ -270,6 +271,7 @@ def post(id):
 
 
 @app.route('/posts/update/<int:id>', methods=['GET', 'POST'])
+@login_required
 def update_post(id):
     form = PostForm()
     post = Post.query.get_or_404(id)
@@ -293,6 +295,7 @@ def update_post(id):
 
 
 @app.route('/posts/delete/<int:id>')
+@login_required
 def delete_post(id):
     post = Post.query.get_or_404(id)
 

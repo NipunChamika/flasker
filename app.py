@@ -2,12 +2,14 @@ import os
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, flash, request, url_for
+from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user, current_user
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
+from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.security import generate_password_hash, check_password_hash
-from wtforms import PasswordField, StringField, SubmitField, EmailField, TextAreaField
+from wtforms import PasswordField, StringField, SubmitField, EmailField, TextAreaField, ValidationError
 from wtforms.validators import DataRequired, EqualTo
 
 load_dotenv()
@@ -19,12 +21,22 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message_category = 'danger'
 
-class User(db.Model):
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
+    username = db.Column(db.String(255), nullable=False, unique=True)
     email = db.Column(db.String(255), nullable=False, unique=True)
-    favorite_color = db.Column(db.String(50))
     password_hash = db.Column(db.String(255), nullable=False)
     date_added = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc))
@@ -54,6 +66,17 @@ class Post(db.Model):
         db.DateTime, default=lambda: datetime.now(timezone.utc))
 
 
+class UsernameValidator(object):
+    def __init__(self, message=None):
+        if not message:
+            message = 'Username must not contain spaces.'
+        self.message = message
+
+    def __call__(self, form, field):
+        if ' ' in field.data:
+            raise ValidationError(self.message)
+
+
 class NameForm(FlaskForm):
     name = StringField('Enter your name', validators=[DataRequired()])
     submit = SubmitField('Submit')
@@ -62,14 +85,15 @@ class NameForm(FlaskForm):
 class UserForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired()])
     email = EmailField('Email', validators=[DataRequired()])
-    favorite_color = StringField('Favorite Color')
+    username = StringField('Username', validators=[
+                           DataRequired(), UsernameValidator()])
     password = PasswordField('Password', validators=[DataRequired()])
     confirm_password = PasswordField('Confirm Password', validators=[
                                      DataRequired(), EqualTo('password', message='Passwords must match!')])
     submit = SubmitField('Submit')
 
 
-class LoginForm(FlaskForm):
+class PasswordForm(FlaskForm):
     email = EmailField('Email', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Submit')
@@ -80,6 +104,13 @@ class PostForm(FlaskForm):
     content = TextAreaField('Content', validators=[DataRequired()])
     author = StringField('Author', validators=[DataRequired()])
     slug = StringField('Slug', validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+
+class LoginForm(FlaskForm):
+    username = StringField('Username', validators=[
+                           DataRequired(), UsernameValidator()])
+    password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Submit')
 
 
@@ -117,24 +148,34 @@ def name_form():
 
 @app.route('/users', methods=['GET', 'POST'])
 def add_user():
-    name = None
+    user_added = False
     form = UserForm()
+
     if form.validate_on_submit():
-        existing_user = User.query.filter_by(email=form.email.data).first()
+        existing_user = User.query.filter(or_(
+            User.email == form.email.data, User.username == form.username.data.lower())).first()
         if existing_user is None:
             hashed_password = generate_password_hash(form.password.data)
-            new_user = User(name=form.name.data, email=form.email.data,
-                            favorite_color=form.favorite_color.data, password_hash=hashed_password)
+            new_user = User(name=form.name.data, username=form.username.data.lower(),
+                            email=form.email.data, password_hash=hashed_password)
             db.session.add(new_user)
             db.session.commit()
-        name = form.name.data
+            user_added = True
+            flash('User added successfully!', 'success')
+        else:
+            if existing_user.username == form.username.data.lower():
+                flash(
+                    'Username already exists. Please choose a different username.', 'danger')
+            elif existing_user.email == form.email.data:
+                flash('Email already exists.', 'danger')
+
         form.name.data = ''
+        form.username.data = ''
         form.email.data = ''
-        form.favorite_color.data = ''
-        form.password = ''
-        flash('User added successfully!')
+        form.password.data = ''
+        form.confirm_password.data = ''
     users = User.query.order_by(User.date_added)
-    return render_template('add_user.html', name=name, form=form, users=users)
+    return render_template('add_user.html', user_added=user_added, form=form, users=users)
 
 
 @app.route('/update/<int:id>', methods=['GET', 'POST'])
@@ -144,8 +185,8 @@ def update_user(id):
 
     if request.method == 'POST':
         user_to_update.name = request.form['name']
+        user_to_update.username = request.form['username']
         user_to_update.email = request.form['email']
-        user_to_update.favorite_color = request.form['favorite_color']
         try:
             db.session.commit()
             flash('User updated successfully!')
@@ -171,13 +212,13 @@ def delete_user(id):
         return redirect(url_for('add_user'))
 
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
+@app.route('/test_pw', methods=['GET', 'POST'])
+def test_pw():
     email = None
     password = None
     user = None
     logged_in = None
-    form = LoginForm()
+    form = PasswordForm()
 
     if form.validate_on_submit():
         email = form.email.data
@@ -192,7 +233,7 @@ def login():
         else:
             flash('Wrong email or password')
 
-    return render_template('login.html', email=email, user=user, logged_in=logged_in, form=form)
+    return render_template('test_pw.html', email=email, user=user, logged_in=logged_in, form=form)
 
 
 @app.route('/add-post', methods=['GET', 'POST'])
@@ -263,3 +304,41 @@ def delete_post(id):
     except SQLAlchemyError:
         flash('Database error, try again!')
         return redirect(url_for('posts'))
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    user = None
+    logged_in = None
+    form = LoginForm()
+
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+        form.username.data = ''
+        form.password.data = ''
+
+        user = User.query.filter_by(username=username).first()
+
+        if user:
+            if check_password_hash(user.password_hash, password):
+                login_user(user)
+                return redirect(url_for('dashboard'))
+            flash('Wrong username or password.', 'danger')
+        else:
+            flash('Wrong username or password.', 'danger')
+
+    return render_template('login.html', form=form, logged_in=logged_in, user=user)
+
+
+@app.route('/dashboard', methods=['GET', 'POST'])
+@login_required
+def dashboard():
+    return render_template('dashboard.html')
+
+
+@app.route('/logout', methods=['GET', 'POST'])
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))

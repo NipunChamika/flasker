@@ -10,6 +10,7 @@ python-dotenv = "*"
 flask-sqlalchemy = "*"
 mysqlclient = "*"
 flask-migrate = "*"
+flask-login = "*"
 
 [dev-packages]
 

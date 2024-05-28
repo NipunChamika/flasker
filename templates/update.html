@@ -16,8 +16,8 @@ get_flashed_messages() %}
   {% for user in users %}
   <tr>
     <td>{{ user.name }}</td>
+    <td>{{ user.username }}</td>
     <td>{{ user.email }}</td>
-    <td>{{ user.favorite_color }}</td>
   </tr>
   {% endfor %}
 </table>
@@ -28,11 +28,10 @@ get_flashed_messages() %}
   <form method="post">
     {{ form.hidden_tag() }} {{ form.name.label(class="form-label") }} {{
     form.name(class="form-control", value=user_to_update.name) }} {{
+    form.username.label(class="form-label") }} {{
+    form.username(class="form-control", value=user_to_update.username) }} {{
     form.email.label(class="form-label") }} {{ form.email(class="form-control",
-    value=user_to_update.email) }} {{
-    form.favorite_color.label(class="form-label") }} {{
-    form.favorite_color(class="form-control",
-    value=user_to_update.favorite_color) }}
+    value=user_to_update.email) }}
     <br />
     {{ form.submit(class="btn btn-success") }}
     <a href="{{ url_for('delete_user', id=id) }}" class="btn btn-danger"

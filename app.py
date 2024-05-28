@@ -184,19 +184,22 @@ def update_user(id):
     form = UserForm()
     user_to_update = User.query.get_or_404(id)
 
-    if request.method == 'POST':
-        user_to_update.name = request.form['name']
-        user_to_update.username = request.form['username']
-        user_to_update.email = request.form['email']
+    if form.validate_on_submit():
+        user_to_update.name = form.name.data
+        user_to_update.username = form.username.data
+        user_to_update.email = form.email.data
+        password = form.password.data
+        hashed_password = generate_password_hash(password)
+        user_to_update.password_hash = hashed_password
+
         try:
+            db.session.add(user_to_update)
             db.session.commit()
             flash('User updated successfully!', 'success')
-            return render_template('update.html', form=form, user_to_update=user_to_update)
+            return redirect(url_for('dashboard'))
         except SQLAlchemyError:
             flash('Database error, try again!', 'danger')
-            return render_template('update.html', form=form, user_to_update=user_to_update)
-    else:
-        return render_template('update.html', form=form, user_to_update=user_to_update, id=id)
+    return render_template('update.html', form=form, user_to_update=user_to_update, id=id)
 
 
 @app.route('/delete/<int:id>')

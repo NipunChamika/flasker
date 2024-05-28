@@ -1,43 +1,52 @@
-{% extends 'base.html' %} {% block content %} {% for category, message in
-get_flashed_messages(with_categories=true) %}
-<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-  {{ message }}
-  <button
-    type="button"
-    class="btn-close"
-    data-bs-dismiss="alert"
-    aria-label="Close"
-  ></button>
-</div>
-{% endfor %} {% if name %}
-<h1>User Updated!</h1>
-<br />
-<table class="table table-hover table table-bordered">
-  {% for user in users %}
-  <tr>
-    <td>{{ user.name }}</td>
-    <td>{{ user.username }}</td>
-    <td>{{ user.email }}</td>
-  </tr>
-  {% endfor %}
-</table>
-{% else %}
-<h1>Update User</h1>
-<br />
-<div class="shadow-sm p-3 mb-5 bg-body-tertiary rounded">
-  <form method="post">
-    {{ form.hidden_tag() }} {{ form.name.label(class="form-label") }} {{
-    form.name(class="form-control", value=user_to_update.name) }} {{
-    form.username.label(class="form-label") }} {{
-    form.username(class="form-control", value=user_to_update.username) }} {{
-    form.email.label(class="form-label") }} {{ form.email(class="form-control",
-    value=user_to_update.email) }}
+{% extends 'base.html' %} 
+{% block content %} 
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button
+        type="button"
+        class="btn-close"
+        data-bs-dismiss="alert"
+        aria-label="Close"
+      ></button>
+    </div>
+  {% endfor %} 
+  
+  {% if name %}
+    <h1>User Updated!</h1>
     <br />
-    {{ form.submit(class="btn btn-success") }}
-    <a href="{{ url_for('delete_user', id=id) }}" class="btn btn-danger"
-      >Delete</a
-    >
-  </form>
-</div>
-<br />
-{% endif %} {% endblock %}
+    <table class="table table-hover table table-bordered">
+      {% for user in users %}
+        <tr>
+          <td>{{ user.name }}</td>
+          <td>{{ user.username }}</td>
+          <td>{{ user.email }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+      <h1>Update User</h1>
+      <br />
+      <div class="shadow-sm p-3 mb-5 bg-body-tertiary rounded">
+        <form method="post">
+          {{ form.hidden_tag() }}
+          {{ form.name.label(class="form-label") }}
+          {{ form.name(class="form-control", value=user_to_update.name) }}
+          {{ form.username.label(class="form-label") }}
+          {{ form.username(class="form-control", value=user_to_update.username) }}
+          {{ form.email.label(class="form-label") }}
+          {{ form.email(class="form-control", value=user_to_update.email) }}
+          {{ form.password.label(class="form-label") }}
+          {{ form.password(class="form-control") }}
+          {{ form.confirm_password.label(class="form-label") }}
+          {{ form.confirm_password(class="form-control") }}
+          <br />
+          {{ form.submit(class="btn btn-success") }}
+          <a href="{{ url_for('delete_user', id=current_user.id) }}" class="btn btn-danger"
+            >Delete</a
+          >
+        </form>
+      </div>
+      <br />
+  {% endif %}
+{% endblock %}

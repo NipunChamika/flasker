@@ -235,23 +235,24 @@ def update_post(id):
     form = PostForm()
     post = Post.query.get_or_404(id)
 
-    if current_user.id == post.user.id:
-        if form.validate_on_submit():
-            post.title = form.title.data
-            post.content = form.content.data
-            post.slug = form.slug.data
-
-            db.session.add(post)
-            db.session.commit()
-            flash('Post updated successfully!', 'success')
-            return redirect(url_for('post', id=post.id))
-
-        form.title.data = post.title
-        form.content.data = post.content
-        form.slug.data = post.slug
-    else:
+    if current_user.id != post.user_id:
         flash('Not Allowed!', 'danger')
         return redirect(url_for('posts', id=post.id))
+
+    if form.validate_on_submit():
+        post.title = form.title.data
+        post.content = form.content.data
+        post.slug = form.slug.data
+
+        db.session.add(post)
+        db.session.commit()
+        flash('Post updated successfully!', 'success')
+        return redirect(url_for('post', id=post.id))
+
+    form.title.data = post.title
+    form.content.data = post.content
+    form.slug.data = post.slug
+        
     return render_template('update_post.html', form=form)
 
 
@@ -260,7 +261,7 @@ def update_post(id):
 def delete_post(id):
     post = Post.query.get_or_404(id)
 
-    if current_user.id == post.user.id:
+    if current_user.id == post.user_id:
         try:
             db.session.delete(post)
             db.session.commit()

@@ -1,16 +1,15 @@
 import os
 from datetime import datetime, timezone
 from dotenv import load_dotenv
-from flask import Flask, redirect, render_template, flash, request, url_for
-from flask_login import UserMixin, login_user, LoginManager, login_required, logout_user
+from flask import Flask, redirect, render_template, flash, url_for
+from flask_login import UserMixin, current_user, login_user, LoginManager, login_required, logout_user
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from flask_wtf import FlaskForm
 from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.security import generate_password_hash, check_password_hash
-from wtforms import PasswordField, StringField, SubmitField, EmailField, TextAreaField, ValidationError
-from wtforms.validators import DataRequired, EqualTo
+from forms import NameForm, UserForm, PasswordForm, PostForm, LoginForm
+
 
 load_dotenv()
 
@@ -40,6 +39,7 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(255), nullable=False)
     date_added = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc))
+    posts = db.relationship('Post', backref='user')
 
     @property
     def password(self):
@@ -60,58 +60,10 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(255))
     content = db.Column(db.Text)
-    author = db.Column(db.String(255))
     slug = db.Column(db.String(255))
     date_posted = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc))
-
-
-class UsernameValidator(object):
-    def __init__(self, message=None):
-        if not message:
-            message = 'Username must not contain spaces.'
-        self.message = message
-
-    def __call__(self, form, field):
-        if ' ' in field.data:
-            raise ValidationError(self.message)
-
-
-class NameForm(FlaskForm):
-    name = StringField('Enter your name', validators=[DataRequired()])
-    submit = SubmitField('Submit')
-
-
-class UserForm(FlaskForm):
-    name = StringField('Name', validators=[DataRequired()])
-    email = EmailField('Email', validators=[DataRequired()])
-    username = StringField('Username', validators=[
-                           DataRequired(), UsernameValidator()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    confirm_password = PasswordField('Confirm Password', validators=[
-                                     DataRequired(), EqualTo('password', message='Passwords must match!')])
-    submit = SubmitField('Submit')
-
-
-class PasswordForm(FlaskForm):
-    email = EmailField('Email', validators=[DataRequired()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    submit = SubmitField('Submit')
-
-
-class PostForm(FlaskForm):
-    title = StringField('Title', validators=[DataRequired()])
-    content = TextAreaField('Content', validators=[DataRequired()])
-    author = StringField('Author', validators=[DataRequired()])
-    slug = StringField('Slug', validators=[DataRequired()])
-    submit = SubmitField('Submit')
-
-
-class LoginForm(FlaskForm):
-    username = StringField('Username', validators=[
-                           DataRequired(), UsernameValidator()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    submit = SubmitField('Submit')
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 
 @app.route('/')
@@ -248,16 +200,18 @@ def add_post():
 
     if form.validate_on_submit():
         post = Post(title=form.title.data, content=form.content.data,
-                    author=form.author.data, slug=form.slug.data)
+                    slug=form.slug.data, user_id=current_user.id)
 
         form.title.data = ''
         form.content.data = ''
-        form.author.data = ''
         form.slug.data = ''
 
-        db.session.add(post)
-        db.session.commit()
-        flash('Post created successfully!', 'success')
+        try:
+            db.session.add(post)
+            db.session.commit()
+            flash('Post created successfully!', 'success')
+        except SQLAlchemyError:
+            flash('Database error, try again!', 'danger')
 
     posts = Post.query.order_by(Post.date_posted)
     return render_template('add_post.html', title=form.title.data, form=form, posts=posts)
@@ -281,21 +235,23 @@ def update_post(id):
     form = PostForm()
     post = Post.query.get_or_404(id)
 
-    if form.validate_on_submit():
-        post.title = form.title.data
-        post.content = form.content.data
-        post.author = form.author.data
-        post.slug = form.slug.data
+    if current_user.id == post.user.id:
+        if form.validate_on_submit():
+            post.title = form.title.data
+            post.content = form.content.data
+            post.slug = form.slug.data
 
-        db.session.add(post)
-        db.session.commit()
-        flash('Post updated successfully!', 'success')
-        return redirect(url_for('post', id=post.id))
+            db.session.add(post)
+            db.session.commit()
+            flash('Post updated successfully!', 'success')
+            return redirect(url_for('post', id=post.id))
 
-    form.title.data = post.title
-    form.content.data = post.content
-    form.author.data = post.author
-    form.slug.data = post.slug
+        form.title.data = post.title
+        form.content.data = post.content
+        form.slug.data = post.slug
+    else:
+        flash('Not Allowed!', 'danger')
+        return redirect(url_for('posts', id=post.id))
     return render_template('update_post.html', form=form)
 
 
@@ -304,13 +260,17 @@ def update_post(id):
 def delete_post(id):
     post = Post.query.get_or_404(id)
 
-    try:
-        db.session.delete(post)
-        db.session.commit()
-        flash('Post deleted successfully!', 'success')
-        return redirect(url_for('posts'))
-    except SQLAlchemyError:
-        flash('Database error, try again!', 'danger')
+    if current_user.id == post.user.id:
+        try:
+            db.session.delete(post)
+            db.session.commit()
+            flash('Post deleted successfully!', 'success')
+            return redirect(url_for('posts'))
+        except SQLAlchemyError:
+            flash('Database error, try again!', 'danger')
+            return redirect(url_for('posts'))
+    else:
+        flash('Not Allowed!', 'danger')
         return redirect(url_for('posts'))
 
 

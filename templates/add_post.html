@@ -1,55 +1,57 @@
-{% extends 'base.html' %} {% block content %} {% for category, message in
-get_flashed_messages(with_categories=true) %}
-<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-  {{ message }}
-  <button
-    type="button"
-    class="btn-close"
-    data-bs-dismiss="alert"
-    aria-label="Close"
-  ></button>
-</div>
-{% endfor %} {% if title %}
-<h1>Post Added!</h1>
-<br />
-<table class="table table-hover table table-bordered">
-  {% for post in posts %}
-  <tr>
-    <!-- <td>
-      <a href="{{ url_for('update_user', id=user.id) }}">{{ user.name }}</a>
-    </td> -->
-    <td>{{ post.title }}</td>
-    <td>{{ post.content }}</td>
-    <td>{{ post.author }}</td>
-    <td>{{ post.slug }}</td>
-  </tr>
+{% extends 'base.html' %}
+{% block content %}
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button
+        type="button"
+        class="btn-close"
+        data-bs-dismiss="alert"
+        aria-label="Close"
+      ></button>
+    </div>
   {% endfor %}
-</table>
-{% else %}
-<h1>Add Post</h1>
-<br />
-<div class="shadow-sm p-3 mb-5 bg-body-tertiary rounded">
-  <form action="{{ url_for('add_post') }}" method="post">
-    {{ form.hidden_tag() }} {{ form.title.label(class="form-label") }} {{
-    form.title(class="form-control") }} {{ form.author.label(class="form-label")
-    }} {{ form.author(class="form-control") }} {{
-    form.slug.label(class="form-label")}} {{ form.slug(class="form-control") }}
-    {{ form.content.label(class="form-label") }} {{
-    form.content(class="form-control", rows="5") }}
+  
+  {% if title %}
+    <h1>Post Added!</h1>
     <br />
-    {{ form.submit(class="btn btn-success") }}
-  </form>
-</div>
-<br />
-<h1>Posts List</h1>
-<table class="table table-hover table table-bordered">
-  {% for post in posts %}
-  <tr>
-    <td>{{ post.title }}</td>
-    <td>{{ post.content }}</td>
-    <td>{{ post.author }}</td>
-    <td>{{ post.slug }}</td>
-  </tr>
-  {% endfor %}
-</table>
-{% endif %} {% endblock %}
+    <table class="table table-hover table table-bordered">
+      {% for post in posts %}
+        <tr>
+          <td>{{ post.title }}</td>
+          <td>{{ post.content }}</td>
+          <td>{{ post.user.name }}</td>
+          <td>{{ post.slug }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% else %}
+    <h1>Add Post</h1>
+    <br />
+    <div class="shadow-sm p-3 mb-5 bg-body-tertiary rounded">
+      <form action="{{ url_for('add_post') }}" method="post">
+        {{ form.hidden_tag() }}
+        {{ form.title.label(class="form-label") }}
+        {{ form.title(class="form-control") }}
+        {{ form.slug.label(class="form-label")}}
+        {{ form.slug(class="form-control") }}
+        {{ form.content.label(class="form-label") }}
+        {{ form.content(class="form-control", rows="5") }}
+        <br />
+        {{ form.submit(class="btn btn-success") }}
+      </form>
+    </div>
+    <br />
+    <h1>Posts List</h1>
+    <table class="table table-hover table table-bordered">
+      {% for post in posts %}
+        <tr>
+          <td>{{ post.title }}</td>
+          <td>{{ post.content }}</td>
+          <td>{{ post.user.name }}</td>
+          <td>{{ post.slug }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  {% endif %}
+{% endblock %}

@@ -16,15 +16,36 @@
 {% for post in posts %}
     <div class="shadow-sm p-3 mb-5 bg-body-tertiary rounded">
         <h2>{{ post.title }}</h2>
-        <small>By: {{ post.author }}</br>
+        <small>By: {{ post.user.name }}</br>
         {{ post.date_posted }}</small></br></br>
         {{  post.content }}</br></br>
         <a href="{{ url_for('post', id=post.id) }}" class="btn btn-outline-success btn-sm">View Post</a>
         {% if current_user.is_authenticated %}
+          {% if current_user.id == post.user.id %}
           <a href="{{ url_for('update_post', id=post.id) }}" class="btn btn-outline-secondary btn-sm">Edit Post</a>
-          <a href="{{ url_for('delete_post', id=post.id) }}" class="btn btn-outline-danger btn-sm">Delete Post</a>
+          <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deletePostModal">Delete Post</button>
+          {% endif %}
         {% endif %}
     </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="deletePostModal" tabindex="-1" aria-labelledby="deletePostModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h1 class="modal-title fs-5" id="exampleModalLabel">Delete post</h1>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                  Are you sure you want to delete this post?
+              </div>
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <a href="{{ url_for('delete_post', id=post.id) }}" class="btn btn-danger">Delete</a>
+              </div>
+          </div>
+      </div>
+  </div>
 {% endfor %}
 
 {% endblock %}

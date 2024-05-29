@@ -8,7 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.security import generate_password_hash, check_password_hash
-from forms import NameForm, UserForm, PasswordForm, PostForm, LoginForm
+from forms import NameForm, UserForm, PasswordForm, PostForm, LoginForm, SearchForm
 
 
 load_dotenv()
@@ -64,6 +64,12 @@ class Post(db.Model):
     date_posted = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+
+@app.context_processor
+def base():
+    form = SearchForm()
+    return dict(form=form)
 
 
 @app.route('/')
@@ -252,7 +258,7 @@ def update_post(id):
     form.title.data = post.title
     form.content.data = post.content
     form.slug.data = post.slug
-        
+
     return render_template('update_post.html', form=form)
 
 
@@ -311,3 +317,14 @@ def dashboard():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+
+@app.route('/search', methods=['POST'])
+def search():
+    form = SearchForm()
+
+    if form.validate_on_submit():
+        search = form.search.data
+        posts = Post.query.filter(Post.content.contains(
+            search)).order_by(Post.title).all()
+        return render_template('search.html', form=form, search=search, posts=posts)

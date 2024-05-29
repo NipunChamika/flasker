@@ -48,3 +48,8 @@ class LoginForm(FlaskForm):
                            DataRequired(), UsernameValidator()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Submit')
+
+
+class SearchForm(FlaskForm):
+    search = StringField('Search', validators=[DataRequired()])
+    submit = SubmitField('Submit')

@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, flash, url_for
+from flask_ckeditor import CKEditor
 from flask_login import UserMixin, current_user, login_user, LoginManager, login_required, logout_user
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -24,6 +25,8 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message_category = 'danger'
+
+ckeditor = CKEditor(app)
 
 
 @login_manager.user_loader

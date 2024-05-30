@@ -11,6 +11,7 @@ flask-sqlalchemy = "*"
 mysqlclient = "*"
 flask-migrate = "*"
 flask-login = "*"
+flask-ckeditor = "*"
 
 [dev-packages]
 

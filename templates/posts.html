@@ -18,7 +18,7 @@
         <h2>{{ post.title }}</h2>
         <small>By: {{ post.user.name }}</br>
         {{ post.date_posted }}</small></br></br>
-        {{  post.content }}</br></br>
+        {{  post.content|safe }}</br></br>
         <a href="{{ url_for('post', id=post.id) }}" class="btn btn-outline-success btn-sm">View Post</a>
         {% if current_user.is_authenticated %}
           {% if current_user.id == post.user.id %}

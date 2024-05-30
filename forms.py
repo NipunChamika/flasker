@@ -1,5 +1,6 @@
+from flask_ckeditor import CKEditorField
 from flask_wtf import FlaskForm
-from wtforms import PasswordField, StringField, SubmitField, EmailField, TextAreaField, ValidationError
+from wtforms import PasswordField, StringField, SubmitField, EmailField, ValidationError
 from wtforms.validators import DataRequired, EqualTo
 
 
@@ -38,7 +39,7 @@ class PasswordForm(FlaskForm):
 
 class PostForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])
-    content = TextAreaField('Content', validators=[DataRequired()])
+    content = CKEditorField('Content', validators=[DataRequired()])
     slug = StringField('Slug', validators=[DataRequired()])
     submit = SubmitField('Submit')
 

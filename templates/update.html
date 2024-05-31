@@ -16,16 +16,18 @@
     <h1>Update User</h1>
     <br />
     <div class="shadow-sm p-3 mb-5 bg-body-tertiary rounded">
-      <form method="post">
+      <form method="post" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
         {{ form.name.label(class="form-label") }}
-        {{ form.name(class="form-control", value=user_to_update.name) }}
+        {{ form.name(class="form-control mb-3", value=user_to_update.name) }}
         {{ form.username.label(class="form-label") }}
-        {{ form.username(class="form-control", value=user_to_update.username) }}
+        {{ form.username(class="form-control mb-3", value=user_to_update.username) }}
         {{ form.email.label(class="form-label") }}
-        {{ form.email(class="form-control", value=user_to_update.email) }}
+        {{ form.email(class="form-control mb-3", value=user_to_update.email) }}
+        {{ form.profile_pic.label(class="form-label") }}
+        {{ form.profile_pic(class="form-control mb-3", value=user_to_update.profile_pic) }}
         {{ form.password.label(class="form-label") }}
-        {{ form.password(class="form-control") }}
+        {{ form.password(class="form-control mb-3") }}
         {{ form.confirm_password.label(class="form-label") }}
         {{ form.confirm_password(class="form-control") }}
         <br />

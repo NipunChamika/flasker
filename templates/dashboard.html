@@ -34,7 +34,11 @@
                     <a href="{{ url_for('update_user', id=current_user.id) }}" class="btn btn-outline-secondary btn-sm">Edit Profile</a>
                     <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</button>
                 </div>
-                <img src="{{ url_for('static', filename='images/default_profile_pic.jpg') }}" alt="Default Profile Pic" width="150" class="img-thumbnail">
+                {% if current_user.profile_pic %}
+                    <img src="{{ url_for('static', filename=current_user.profile_pic) }}" alt="Default Profile Pic" width="150" class="img-thumbnail">
+                {% else %}
+                    <img src="{{ url_for('static', filename='images/default_profile_pic.jpg') }}" alt="Default Profile Pic" width="150" class="img-thumbnail">
+                {% endif %}
             </div>
         </div>
     </div>

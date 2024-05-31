@@ -8,15 +8,20 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
+import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from forms import NameForm, UserForm, PasswordForm, PostForm, LoginForm, SearchForm
 
 
 load_dotenv()
 
+UPLOAD_PATH = os.path.abspath(os.getenv('UPLOAD_PATH'))
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:N1pun$@localhost/users'
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['UPLOAD_PATH'] = UPLOAD_PATH
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -43,6 +48,7 @@ class User(db.Model, UserMixin):
     date_added = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc))
     posts = db.relationship('Post', backref='user')
+    profile_pic = db.Column(db.String(255), nullable=True)
 
     @property
     def password(self):
@@ -143,15 +149,35 @@ def add_user():
 @login_required
 def update_user(id):
     form = UserForm()
+    upload_path = app.config['UPLOAD_PATH']
+    os.chmod(upload_path, 755)
+    profile_pic_filename = None
     user_to_update = User.query.get_or_404(id)
 
     if form.validate_on_submit():
         user_to_update.name = form.name.data
         user_to_update.username = form.username.data
         user_to_update.email = form.email.data
+
         password = form.password.data
         hashed_password = generate_password_hash(password)
         user_to_update.password_hash = hashed_password
+        profile_pic = form.profile_pic.data
+
+        if profile_pic:
+            filename = secure_filename(profile_pic.filename)
+            profile_pic_filename = f'{ uuid.uuid1() }_{ filename }'
+            user_to_update.profile_pic = profile_pic_filename
+
+            if not os.path.exists(upload_path):
+                os.makedirs(upload_path)
+
+            try:
+                print("Upload path: ", upload_path)
+                profile_pic.save(os.path.join(upload_path), profile_pic_filename)
+            except Exception as e:
+                flash(f'Error saving file: { str(e) }', 'danger')
+                return redirect(url_for('dashboard'))
 
         try:
             db.session.add(user_to_update)

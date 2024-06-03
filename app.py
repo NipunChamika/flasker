@@ -1,4 +1,5 @@
 import os
+import uuid
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, flash, url_for
@@ -8,7 +9,6 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
-import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from forms import NameForm, UserForm, PasswordForm, PostForm, LoginForm, SearchForm
@@ -16,12 +16,10 @@ from forms import NameForm, UserForm, PasswordForm, PostForm, LoginForm, SearchF
 
 load_dotenv()
 
-UPLOAD_PATH = os.path.abspath(os.getenv('UPLOAD_PATH'))
-
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:N1pun$@localhost/users'
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['UPLOAD_PATH'] = UPLOAD_PATH
+app.config['UPLOAD_PATH'] = os.getenv('UPLOAD_PATH')
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -150,7 +148,6 @@ def add_user():
 def update_user(id):
     form = UserForm()
     upload_path = app.config['UPLOAD_PATH']
-    os.chmod(upload_path, 755)
     profile_pic_filename = None
     user_to_update = User.query.get_or_404(id)
 
@@ -166,7 +163,7 @@ def update_user(id):
 
         if profile_pic:
             filename = secure_filename(profile_pic.filename)
-            profile_pic_filename = f'{ uuid.uuid1() }_{ filename }'
+            profile_pic_filename = f'{uuid.uuid1()}_{filename}'
             user_to_update.profile_pic = profile_pic_filename
 
             if not os.path.exists(upload_path):
@@ -174,9 +171,10 @@ def update_user(id):
 
             try:
                 print("Upload path: ", upload_path)
-                profile_pic.save(os.path.join(upload_path), profile_pic_filename)
+                profile_pic.save(os.path.join(
+                    upload_path, profile_pic_filename))
             except Exception as e:
-                flash(f'Error saving file: { str(e) }', 'danger')
+                flash(f'Error saving file: {str(e)}', 'danger')
                 return redirect(url_for('dashboard'))
 
         try:

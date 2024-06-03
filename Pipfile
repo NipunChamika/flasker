@@ -12,6 +12,7 @@ mysqlclient = "*"
 flask-migrate = "*"
 flask-login = "*"
 flask-ckeditor = "*"
+arrow = "*"
 
 [dev-packages]
 

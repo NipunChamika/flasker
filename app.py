@@ -1,4 +1,5 @@
 import os
+import arrow
 import uuid
 from datetime import datetime, timezone
 from dotenv import load_dotenv
@@ -252,14 +253,25 @@ def add_post():
 
 @app.route('/posts')
 def posts():
+    time_difference = None
+
     posts = Post.query.order_by(Post.date_posted)
-    return render_template('posts.html', posts=posts)
+
+    for post in posts:
+        time_difference = arrow.get(post.date_posted).humanize() + " •"
+
+    return render_template('posts.html', posts=posts, time_difference=time_difference)
 
 
 @app.route('/posts/<int:id>')
 def post(id):
+    time_difference = None
+
     post = Post.query.get_or_404(id)
-    return render_template('post.html', post=post)
+
+    time_difference = arrow.get(post.date_posted).humanize() + " •"
+
+    return render_template('post.html', post=post, time_difference=time_difference)
 
 
 @app.route('/posts/update/<int:id>', methods=['GET', 'POST'])
